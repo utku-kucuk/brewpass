@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -10,6 +10,7 @@ from sqlalchemy import (
     Index,
     SmallInteger,
     String,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -30,6 +31,7 @@ class Order(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint("extra_shots BETWEEN 0 AND 3", name="extra_shots_range"),
         Index("ix_orders_user_id_created_at", "user_id", "created_at"),
         Index("ix_orders_shop_id_status", "shop_id", "status"),
+        Index("ix_orders_shop_owner_id_status", "shop_owner_id", "status"),
     )
 
     # Ids owned by other services (auth, catalog); no cross-service foreign keys.
@@ -38,6 +40,8 @@ class Order(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     product_id: Mapped[uuid.UUID] = mapped_column()
     # Snapshot of catalog data at order time, so history stays readable if the menu changes.
     shop_name: Mapped[str] = mapped_column(String(120))
+    # Owner of the shop when the order was placed; authorizes shop-side actions.
+    shop_owner_id: Mapped[uuid.UUID | None] = mapped_column()
     product_name: Mapped[str] = mapped_column(String(100))
     subscription_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("subscriptions.id", ondelete="RESTRICT"), index=True
@@ -56,6 +60,8 @@ class Order(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # True when paid with a guest credit instead of a regular one.
     is_guest: Mapped[bool] = mapped_column(Boolean, default=False)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Bottomless members get priority pickup; shops see these first.
+    is_priority: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     status_events: Mapped[list["OrderStatusEvent"]] = relationship(
@@ -75,7 +81,10 @@ class OrderStatusEvent(UUIDPrimaryKeyMixin, Base):
     to_status: Mapped[OrderStatus] = mapped_column(ORDER_STATUS_ENUM)
     changed_by_id: Mapped[uuid.UUID | None] = mapped_column()
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        server_default=func.now(),
+        nullable=False,
     )
 
     order: Mapped[Order] = relationship(back_populates="status_events")

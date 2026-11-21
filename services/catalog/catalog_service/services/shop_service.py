@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, time
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
@@ -34,13 +34,16 @@ def week_hours(shop: Shop) -> list[DayHours]:
     ]
 
 
+def local_clock(now: datetime) -> tuple[int, time]:
+    """Weekday and wall-clock time in the shops' time zone (opening hours are local)."""
+    local = now.astimezone(ZoneInfo(get_settings().shop_timezone))
+    return local.weekday(), local.time().replace(tzinfo=None)
+
+
 class ShopService:
     def __init__(self, session: Session, now: datetime) -> None:
         self.shops = ShopRepository(session)
-        # Opening hours are local wall-clock times.
-        local = now.astimezone(ZoneInfo(get_settings().shop_timezone))
-        self.weekday = local.weekday()
-        self.local_time = local.time().replace(tzinfo=None)
+        self.weekday, self.local_time = local_clock(now)
 
     def _summary_fields(self, row: ShopRow) -> dict:
         hours = week_hours(row.shop)

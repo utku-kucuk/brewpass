@@ -27,11 +27,12 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import Engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
+from commerce_service.clients.catalog_client import get_catalog_client  # noqa: E402
 from commerce_service.clients.payment_client import get_payment_client  # noqa: E402
 from commerce_service.db import get_db  # noqa: E402
 from commerce_service.main import create_app  # noqa: E402
 from commerce_service.seed import seed  # noqa: E402
-from tests.fakes import FakePayments  # noqa: E402
+from tests.fakes import FakeCatalog, FakePayments  # noqa: E402
 
 SERVICE_DIR = Path(__file__).resolve().parent.parent
 TEST_DATABASE_URL = os.environ.get(
@@ -58,11 +59,19 @@ def payments() -> FakePayments:
 
 
 @pytest.fixture
-def client(db_session: Session, payments: FakePayments) -> Iterator[TestClient]:
+def catalog() -> FakeCatalog:
+    return FakeCatalog()
+
+
+@pytest.fixture
+def client(
+    db_session: Session, payments: FakePayments, catalog: FakeCatalog
+) -> Iterator[TestClient]:
     """API client sharing the test's rolled-back session, with plans seeded."""
     seed(db_session)
     app = create_app()
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_payment_client] = lambda: payments
+    app.dependency_overrides[get_catalog_client] = lambda: catalog
     with TestClient(app) as test_client:
         yield test_client

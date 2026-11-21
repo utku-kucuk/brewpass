@@ -1,9 +1,12 @@
 import uuid
+from datetime import UTC, datetime
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from brewpass_common.seed_ids import user_id
+from catalog_service.api.shops import get_now
 from catalog_service.seed import product_id, seed, shop_id
 from tests.conftest import INTERNAL_TOKEN
 
@@ -56,3 +59,23 @@ def test_health_checks_database(client: TestClient) -> None:
         "environment": "test",
         "database": "ok",
     }
+
+
+@pytest.mark.parametrize(
+    ("now", "expected"),
+    [
+        (datetime(2026, 11, 18, 7, 0, tzinfo=UTC), True),  # Wednesday 10:00 Istanbul
+        (datetime(2026, 11, 22, 6, 30, tzinfo=UTC), False),  # Sunday 09:30, opens at 10:00
+    ],
+)
+def test_product_lookup_reports_whether_shop_is_open(
+    client: TestClient, db_session: Session, now: datetime, expected: bool
+) -> None:
+    seed(db_session)
+    client.app.dependency_overrides[get_now] = lambda: now  # type: ignore[attr-defined]
+
+    response = client.get(
+        f"/internal/products/{product_id('Cihangir Corner Café', 'Espresso')}", headers=HEADERS
+    )
+
+    assert response.json()["data"]["shop"]["is_open_now"] is expected

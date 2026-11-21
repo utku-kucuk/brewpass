@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
-from brewpass_common.errors import PaymentRequiredError, ServiceUnavailableError
+from brewpass_common.errors import NotFoundError, PaymentRequiredError, ServiceUnavailableError
+from commerce_service.clients.catalog_client import ProductInfo, ShopInfo
 from commerce_service.clients.payment_client import ChargeResult
 
 
@@ -46,3 +47,44 @@ class FakePayments:
     @property
     def last(self) -> Charge:
         return self.charges[-1]
+
+
+SHOP_ID = uuid.UUID("00000000-0000-0000-0000-00000000c0de")
+OWNER_ID = uuid.UUID("00000000-0000-0000-0000-0000000000ee")
+LATTE_ID = uuid.UUID("00000000-0000-0000-0000-00000000aa01")
+TEA_ID = uuid.UUID("00000000-0000-0000-0000-00000000aa02")
+
+
+@dataclass
+class FakeCatalog:
+    """Stands in for the catalog service with one shop and two drinks."""
+
+    shop_open: bool = True
+    shop_active: bool = True
+    sold_out: set[uuid.UUID] = field(default_factory=set)
+    unavailable: bool = False
+
+    def get_product(self, product_id: uuid.UUID) -> ProductInfo:
+        if self.unavailable:
+            raise ServiceUnavailableError()
+        drinks = {
+            LATTE_ID: ("Caffè Latte", True, True),
+            TEA_ID: ("Earl Grey Tea", False, False),
+        }
+        if product_id not in drinks:
+            raise NotFoundError("Drink not found.", code="PRODUCT_NOT_FOUND")
+        name, milk, shot = drinks[product_id]
+        return ProductInfo(
+            id=product_id,
+            name=name,
+            supports_milk=milk,
+            supports_extra_shot=shot,
+            is_available=product_id not in self.sold_out,
+            shop=ShopInfo(
+                id=SHOP_ID,
+                name="Moda Roastery",
+                owner_id=OWNER_ID,
+                is_active=self.shop_active,
+                is_open_now=self.shop_open,
+            ),
+        )

@@ -82,6 +82,25 @@ In Docker, every service runs `alembic upgrade head` (and its seed when `SEED_ON
 - Card numbers are never stored or logged; the payment service keeps the brand, last 4 digits and an opaque token used for renewals and upgrades.
 - Passes renew monthly: on read, and in bulk via `POST /internal/subscriptions/renew-due` (for a scheduler). A declined renewal pauses the pass until it is resumed.
 
+## Orders and QR pickup
+
+| Method | Path | Who | What |
+| ------ | ---- | --- | ---- |
+| POST | `/api/v1/orders` | customer | `{"product_id", "size", "milk", "sugar", "extra_shots", "note", "use_guest_credit"}` |
+| GET | `/api/v1/orders/history` | customer | Newest first; `?favorites=true`, `limit`, `offset` |
+| GET | `/api/v1/orders/{id}` | member or shop owner | Details, status history and `qr_payload` |
+| POST | `/api/v1/orders/{id}/cancel` | customer | Only while PENDING; credit refunded |
+| POST | `/api/v1/orders/{id}/reorder` | customer | Same drink and options again |
+| PATCH | `/api/v1/orders/{id}/favorite` | customer | `{"is_favorite": true}` |
+| GET | `/api/v1/orders/incoming` | shop owner | Open orders for my shops, priority pickups first |
+| PATCH | `/api/v1/orders/{id}/status` | shop owner | ACCEPTED, PREPARING, READY or CANCELLED |
+| POST | `/api/v1/orders/verify-qr` | shop owner | `{"qr_payload": "..."}` completes a READY order |
+
+- **Credits:** an order takes one credit (or a guest credit) from the active pass under a row lock, after renewing the pass if its period ended. Bottomless passes are unlimited and their orders are flagged `is_priority`. `tests/test_order_concurrency.py` proves the last credit cannot be spent twice.
+- **Checks before charging a credit:** the drink exists and is available, the shop is active and open (`ENFORCE_OPENING_HOURS`, default `true`), and milk / extra shots are supported.
+- **Status flow:** `PENDING → ACCEPTED → PREPARING → READY → COMPLETED`; PENDING or ACCEPTED can be CANCELLED by the shop (customers: PENDING only). Every change is recorded in the order's status history. Cancelling refunds the credit if the pass is still in the same period.
+- **QR code:** `qr_payload` is the JSON string to render as a QR image: `{order_id, user_id, shop_id, created_at, signature}`, where `signature` is an HMAC-SHA256 of the other fields with `QR_SIGNING_SECRET`. Scanning completes the order only for the shop's owner, only when READY and only once; forged or edited codes return `INVALID_QR`.
+
 ## Demo accounts (seed)
 
 | Role       | Phone                                            |
