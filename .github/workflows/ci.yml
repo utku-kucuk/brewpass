@@ -1,0 +1,129 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  lint:
+    name: Lint (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install "ruff>=0.11,<1.0"
+      - name: Ruff
+        working-directory: services
+        run: |
+          ruff check .
+          ruff format --check .
+
+  test:
+    name: Test (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [common, auth, catalog, commerce, payment]
+    services:
+      postgres:
+        image: postgis/postgis:16-3.5
+        env:
+          POSTGRES_USER: brewpass
+          POSTGRES_PASSWORD: brewpass
+          POSTGRES_DB: brewpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U brewpass"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: brewpass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: services/*/pyproject.toml
+      - name: Install
+        working-directory: services
+        run: |
+          pip install -e "common[dev]"
+          if [ "${{ matrix.service }}" != "common" ]; then pip install -e "${{ matrix.service }}"; fi
+      - name: Tests
+        working-directory: services/${{ matrix.service }}
+        run: pytest -q
+      - name: Migrations match models
+        if: matrix.service != 'common'
+        working-directory: services/${{ matrix.service }}
+        run: |
+          createdb -h localhost -U brewpass "ci_${{ matrix.service }}"
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out /tmp/jwt.pem 2>/dev/null
+          openssl pkey -in /tmp/jwt.pem -pubout -out /tmp/jwt.pub
+          export JWT_PRIVATE_KEY_FILE=/tmp/jwt.pem JWT_PUBLIC_KEY_FILE=/tmp/jwt.pub
+          export DATABASE_URL="postgresql+psycopg://brewpass:brewpass@localhost:5432/ci_${{ matrix.service }}"
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+          alembic upgrade head
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run build
+
+  smoke:
+    name: End-to-end (Docker Compose)
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    env:
+      # Run the full order flow regardless of the time of day.
+      ENFORCE_OPENING_HOURS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dev keys and config
+        run: |
+          scripts/generate-dev-keys.sh
+          # Containers run as a non-root user and must be able to read the mounted keys.
+          chmod 644 secrets/*.pem
+          cp .env.example .env
+      - name: Start stack
+        run: docker compose up --build --detach --wait --wait-timeout 300
+      - name: Smoke test
+        run: scripts/smoke.sh
+      - name: Service logs
+        if: failure()
+        run: docker compose logs --no-color --tail 200
+      - name: Stop stack
+        if: always()
+        run: docker compose down --volumes
