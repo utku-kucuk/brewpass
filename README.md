@@ -14,11 +14,56 @@ BrewPass is a location-based coffee subscription platform. Subscribers buy a mon
 
 ## Tech Stack
 
-_To be documented._
+| Layer    | Technology                                  |
+| -------- | ------------------------------------------- |
+| Backend  | Python, FastAPI                             |
+| Database | PostgreSQL 16 + PostGIS                     |
+| Frontend | React, TypeScript, Vite                     |
+| Map      | Leaflet + OpenStreetMap                     |
+| Tooling  | Docker Compose, Ruff, pytest, ESLint, Prettier |
+
+See [ADR 0001](docs/adr/0001-tech-stack.md) for the reasoning behind these choices.
+
+## Project Structure
+
+```
+backend/    FastAPI application (REST API under /api/v1)
+frontend/   React + TypeScript web client
+docs/adr/   Architecture Decision Records
+```
 
 ## Getting Started
 
-_Setup instructions are coming soon._
+**Prerequisites:** Python 3.12+, Node.js 20+, Docker.
+
+```bash
+# 1. Configuration
+cp .env.example .env
+
+# 2. Database
+docker compose up -d db
+
+# 3. Backend — http://localhost:8000/api/v1/docs
+cd backend
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+uvicorn app.main:app --reload
+
+# 4. Frontend — http://localhost:5173 (in a second terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+### Quality checks
+
+```bash
+# Backend
+cd backend && pytest && ruff check . && ruff format --check .
+
+# Frontend
+cd frontend && npm run lint && npm run format:check && npm run build
+```
 
 ## Project Status
 
