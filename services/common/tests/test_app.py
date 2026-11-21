@@ -17,25 +17,25 @@ class EchoIn(BaseModel):
 
 
 # Defined once: slowapi registers a route's limit every time the decorator runs.
-test_router = APIRouter(prefix="/api/v1/_test")
+sample_router = APIRouter(prefix="/api/v1/_test")
 
 
-@test_router.post("/echo")
+@sample_router.post("/echo")
 def echo(body: EchoIn) -> EchoIn:
     return body
 
 
-@test_router.get("/conflict")
+@sample_router.get("/conflict")
 def conflict() -> None:
     raise ConflictError("Already exists.", details={"field": "phone_number"})
 
 
-@test_router.get("/boom")
+@sample_router.get("/boom")
 def boom() -> None:
     raise RuntimeError("unexpected")
 
 
-@test_router.get("/limited")
+@sample_router.get("/limited")
 @limiter.limit("2/minute")
 def limited(request: Request) -> dict[str, bool]:
     return {"ok": True}
@@ -45,7 +45,7 @@ def limited(request: Request) -> dict[str, bool]:
 def client() -> Iterator[TestClient]:
     settings = ServiceSettings(service_name="sample", environment="test")
     app = create_service_app(
-        settings, title="Sample", description="Sample service", routers=[test_router]
+        settings, title="Sample", description="Sample service", routers=[sample_router]
     )
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
