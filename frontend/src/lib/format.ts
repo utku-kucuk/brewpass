@@ -62,3 +62,39 @@ export function describePayment(description: string): string {
       return description
   }
 }
+
+export const SIZE_LABELS: Record<string, string> = { S: 'Small', M: 'Medium', L: 'Large' }
+
+export const MILK_LABELS: Record<string, string> = {
+  NONE: 'No milk',
+  WHOLE: 'Whole milk',
+  SKIMMED: 'Skimmed milk',
+  OAT: 'Oat milk',
+  ALMOND: 'Almond milk',
+  LACTOSE_FREE: 'Lactose-free milk',
+}
+
+export const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Sent to café',
+  ACCEPTED: 'Accepted',
+  PREPARING: 'Preparing',
+  READY: 'Ready for pickup',
+  COMPLETED: 'Picked up',
+  CANCELLED: 'Cancelled',
+}
+
+/** "Large · Oat milk · 1 sugar · 1 extra shot" */
+export function describeDrink(order: {
+  size: string
+  milk: string
+  sugar: number
+  extra_shots: number
+}): string {
+  const parts = [SIZE_LABELS[order.size] ?? order.size]
+  if (order.milk !== 'NONE') parts.push(MILK_LABELS[order.milk] ?? order.milk)
+  if (order.sugar > 0) parts.push(`${order.sugar} sugar`)
+  if (order.extra_shots > 0) {
+    parts.push(`${order.extra_shots} extra ${order.extra_shots === 1 ? 'shot' : 'shots'}`)
+  }
+  return parts.join(' · ')
+}
