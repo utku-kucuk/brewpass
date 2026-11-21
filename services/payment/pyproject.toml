@@ -1,0 +1,18 @@
+[project]
+name = "brewpass-payment-service"
+version = "0.1.0"
+description = "BrewPass payment service: BrewPass Pay mock card payments"
+requires-python = ">=3.12"
+dependencies = [
+    "brewpass-common",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["payment_service*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

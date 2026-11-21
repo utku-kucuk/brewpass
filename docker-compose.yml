@@ -1,3 +1,33 @@
+# Local development stack: PostgreSQL + 4 services + API gateway.
+#   scripts/generate-dev-keys.sh && docker compose up --build
+# Gateway: http://localhost:8080  (frontend dev server proxies /api to it)
+
+x-service: &service
+  build:
+    context: ./services
+    dockerfile: Dockerfile
+  restart: unless-stopped
+  depends_on:
+    db:
+      condition: service_healthy
+  # Each service mounts the shared keys and its source (see below).
+  # --reload picks up changes from the mounted source in development.
+  command: >
+    sh -c "exec uvicorn $${SERVICE}_service.main:app --host 0.0.0.0 --port 8000
+    --proxy-headers --forwarded-allow-ips='*' --reload
+    --reload-dir /srv/common/brewpass_common --reload-dir /srv/$${SERVICE}/$${SERVICE}_service"
+
+x-service-env: &service-env
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_FORMAT: ${LOG_FORMAT:-json}
+  CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173"]}
+  RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
+  RATE_LIMIT_DEFAULT: ${RATE_LIMIT_DEFAULT:-120/minute}
+  INTERNAL_TOKEN: ${INTERNAL_TOKEN:-dev-internal-token-change-me}
+  JWT_PUBLIC_KEY_FILE: /run/brewpass-secrets/jwt_public.pem
+  SEED_ON_START: ${SEED_ON_START:-true}
+
 services:
   db:
     image: postgis/postgis:16-3.5
@@ -12,12 +42,88 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/20-brewpass-databases.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  auth:
+    <<: *service
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: auth }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-brewpass}:${POSTGRES_PASSWORD:-brewpass}@db:5432/brewpass_auth
+      JWT_PRIVATE_KEY_FILE: /run/brewpass-secrets/jwt_private.pem
+      HASH_SECRET: ${HASH_SECRET:-dev-only-hash-secret-change-me}
+      OTP_MOCK_CODE: ${OTP_MOCK_CODE:-1234}
+    volumes:
+      - ./secrets:/run/brewpass-secrets:ro
+      - ./services/common/brewpass_common:/srv/common/brewpass_common
+      - ./services/auth/auth_service:/srv/auth/auth_service
+
+  catalog:
+    <<: *service
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: catalog }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-brewpass}:${POSTGRES_PASSWORD:-brewpass}@db:5432/brewpass_catalog
+    volumes:
+      - ./secrets:/run/brewpass-secrets:ro
+      - ./services/common/brewpass_common:/srv/common/brewpass_common
+      - ./services/catalog/catalog_service:/srv/catalog/catalog_service
+
+  commerce:
+    <<: *service
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: commerce }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-brewpass}:${POSTGRES_PASSWORD:-brewpass}@db:5432/brewpass_commerce
+      CATALOG_SERVICE_URL: http://catalog:8000
+      PAYMENT_SERVICE_URL: http://payment:8000
+    volumes:
+      - ./secrets:/run/brewpass-secrets:ro
+      - ./services/common/brewpass_common:/srv/common/brewpass_common
+      - ./services/commerce/commerce_service:/srv/commerce/commerce_service
+
+  payment:
+    <<: *service
+    build:
+      context: ./services
+      dockerfile: Dockerfile
+      args: { SERVICE: payment }
+    environment:
+      <<: *service-env
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-brewpass}:${POSTGRES_PASSWORD:-brewpass}@db:5432/brewpass_payment
+    volumes:
+      - ./secrets:/run/brewpass-secrets:ro
+      - ./services/common/brewpass_common:/srv/common/brewpass_common
+      - ./services/payment/payment_service:/srv/payment/payment_service
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: brewpass-gateway
+    restart: unless-stopped
+    depends_on:
+      auth: { condition: service_healthy }
+      catalog: { condition: service_healthy }
+      commerce: { condition: service_healthy }
+      payment: { condition: service_healthy }
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
-  db-data:
+  pgdata:

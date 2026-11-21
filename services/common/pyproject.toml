@@ -1,0 +1,33 @@
+[project]
+name = "brewpass-common"
+version = "0.1.0"
+description = "Shared building blocks for BrewPass services"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.34,<1.0",
+    "pydantic-settings>=2.8,<3.0",
+    "sqlalchemy>=2.0.40,<3.0",
+    "alembic>=1.15,<2.0",
+    "psycopg[binary]>=3.2.10,<4.0",
+    "slowapi>=0.1.9,<1.0",
+    "pyjwt[crypto]>=2.10,<3.0",
+    "httpx>=0.28,<1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3,<9.0",
+    "respx>=0.22,<1.0",
+    "ruff>=0.11,<1.0",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["brewpass_common*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
