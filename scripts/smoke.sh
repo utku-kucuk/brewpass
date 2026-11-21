@@ -83,4 +83,37 @@ UPGRADED=$(curl -s -X PATCH "$BASE/api/v1/subscriptions/me" "${AUTH[@]}" -d '{"p
 check "upgrade to Bottomless is unlimited" "None" \
   "$(echo "$UPGRADED" | json 'd["data"]["remaining_credits"]')"
 
+# --- Orders and QR pickup ------------------------------------------------------------------
+PRODUCT_ID=$(curl -s "$BASE/api/v1/shops/$SHOP_ID/menu" | json 'd["data"]["items"][0]["id"]')
+BODY=$(printf '{"product_id": "%s", "size": "L", "milk": "OAT"}' "$PRODUCT_ID")
+ORDER=$(curl -s -X POST "$BASE/api/v1/orders" "${AUTH[@]}" -d "$BODY")
+
+if [[ "$(echo "$ORDER" | json 'd["success"]')" != "True" ]]; then
+  check "closed shop refuses orders" "SHOP_CLOSED" "$(echo "$ORDER" | json 'd["error"]["code"]')"
+  echo "  skip order flow (shop is closed; set ENFORCE_OPENING_HOURS=false to test at night)"
+else
+  check "order placed" "PENDING" "$(echo "$ORDER" | json 'd["data"]["status"]')"
+  ORDER_ID=$(echo "$ORDER" | json 'd["data"]["id"]')
+  QR=$(echo "$ORDER" | json 'd["data"]["qr_payload"]')
+
+  # The nearest shop (Karaköy Brew Lab) belongs to the seeded owner +905550000012.
+  curl -s -X POST "$BASE/api/v1/auth/register" -H 'content-type: application/json' \
+    -d '{"phone_number": "05550000012"}' >/dev/null
+  OWNER_TOKEN=$(curl -s -X POST "$BASE/api/v1/auth/verify-otp" -H 'content-type: application/json' \
+    -d '{"phone_number": "05550000012", "code": "1234"}' | json 'd["data"]["access_token"]')
+  OWNER=(-H "Authorization: Bearer $OWNER_TOKEN" -H 'content-type: application/json')
+
+  check "order in the shop's queue" "True" "$(curl -s "$BASE/api/v1/orders/incoming" "${OWNER[@]}" \
+    | json "any(o['id'] == '$ORDER_ID' for o in d['data'])")"
+  for STATUS in ACCEPTED PREPARING READY; do
+    check "shop marks order $STATUS" "$STATUS" "$(curl -s -X PATCH "$BASE/api/v1/orders/$ORDER_ID/status" \
+      "${OWNER[@]}" -d "{\"status\": \"$STATUS\"}" | json 'd["data"]["status"]')"
+  done
+  SCAN=$(python3 -c 'import json,sys; print(json.dumps({"qr_payload": sys.argv[1]}))' "$QR")
+  check "QR scan completes pickup" "COMPLETED" "$(curl -s -X POST "$BASE/api/v1/orders/verify-qr" \
+    "${OWNER[@]}" -d "$SCAN" | json 'd["data"]["status"]')"
+  check "QR cannot be reused" "ALREADY_COMPLETED" "$(curl -s -X POST "$BASE/api/v1/orders/verify-qr" \
+    "${OWNER[@]}" -d "$SCAN" | json 'd["error"]["code"]')"
+fi
+
 echo "All $pass checks passed."
