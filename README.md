@@ -1,5 +1,7 @@
 # BrewPass
 
+[![CI](https://github.com/utku-kucuk/brewpass/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/utku-kucuk/brewpass/actions/workflows/ci.yml)
+
 BrewPass is a location-based coffee subscription platform. Subscribers buy a monthly coffee pass, discover nearby partner coffee shops on an interactive map, customize and place orders against their pass, and pick up their drinks by presenting a signed QR code. Shop owners manage incoming orders through a dedicated dashboard.
 
 ## Key Features
@@ -94,6 +96,8 @@ Services apply their migrations and load demo data on start. Useful URLs:
 Sign in with any Turkish mobile number and the code **`1234`**. Demo accounts are listed in [services/README.md](services/README.md).
 
 ### Quality checks
+
+Every pull request runs the same checks in GitHub Actions (`.github/workflows/ci.yml`): Ruff, each service's tests against PostGIS, a migration drift check, the frontend lint and build, and the smoke test against the full Docker Compose stack. `main` only accepts changes through pull requests with green checks.
 
 ```bash
 scripts/test.sh        # lint + tests for every service (needs `docker compose up -d db`)
