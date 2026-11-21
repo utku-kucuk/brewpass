@@ -93,7 +93,7 @@ Services apply their migrations and load demo data on start. Useful URLs:
 | API docs per service | http://localhost:8080/api/v1/docs/auth (also `catalog`, `commerce`, `payment`) |
 | Health               | http://localhost:8080/health/auth (also `catalog`, `commerce`, `payment`) |
 
-Sign in with any Turkish mobile number and the code **`1234`**. Demo accounts are listed in [services/README.md](services/README.md).
+Open http://localhost:5173 and sign in with any Turkish mobile number and the code **`1234`**. Demo accounts are listed in [services/README.md](services/README.md).
 
 ### Quality checks
 
@@ -103,7 +103,7 @@ Every pull request runs the same checks in GitHub Actions (`.github/workflows/ci
 scripts/test.sh        # lint + tests for every service (needs `docker compose up -d db`)
 scripts/smoke.sh       # end-to-end checks through the gateway (needs the full stack)
 
-cd frontend && npm run lint && npm run format:check && npm run build
+cd frontend && npm run lint && npm run format:check && npm test && npm run build
 ```
 
 ## Project Status
