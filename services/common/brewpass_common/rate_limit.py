@@ -1,4 +1,7 @@
-"""Per-IP rate limiting (slowapi, in-memory storage).
+"""Per-IP rate limiting (slowapi, in-memory storage per service instance).
+
+Behind the gateway, uvicorn runs with `--proxy-headers` so the client IP comes from
+`X-Forwarded-For` instead of the gateway's address.
 
 Every route gets the default limit from settings; sensitive routes (e.g. OTP) can add a stricter
 one with `@limiter.limit("5/minute")` (the route must accept a `request: Request` argument).
@@ -11,10 +14,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from app.core.config import get_settings
-from app.core.responses import error_payload
+from brewpass_common.config import ServiceSettings
+from brewpass_common.responses import error_payload
 
-_settings = get_settings()
+_settings = ServiceSettings()
 
 limiter = Limiter(
     key_func=get_remote_address,

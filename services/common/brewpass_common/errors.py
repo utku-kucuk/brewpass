@@ -13,7 +13,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.responses import error_payload
+from brewpass_common.responses import error_payload
 
 logger = logging.getLogger("app.errors")
 
@@ -60,6 +60,12 @@ class UnprocessableError(AppError):
     status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     code = "UNPROCESSABLE"
     message = "The request is valid but cannot be applied."
+
+
+class ServiceUnavailableError(AppError):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    code = "SERVICE_UNAVAILABLE"
+    message = "A dependent service is unavailable. Please try again shortly."
 
 
 HTTP_STATUS_CODES = {
