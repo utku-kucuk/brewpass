@@ -1,0 +1,18 @@
+[project]
+name = "brewpass-commerce-service"
+version = "0.1.0"
+description = "BrewPass commerce service: subscription passes, credits and orders"
+requires-python = ">=3.12"
+dependencies = [
+    "brewpass-common",
+]
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["commerce_service*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
