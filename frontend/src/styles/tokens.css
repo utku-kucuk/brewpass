@@ -1,0 +1,86 @@
+/* BrewPass design tokens — Espresso & Terracotta (see docs/brand in the product spec). */
+:root {
+  /* Palette */
+  --espresso: #2b1d16;
+  --cream: #f5eee6;
+  --terracotta: #c8553d;
+  --terracotta-strong: #a8432e;
+  --sage: #6b8f71;
+  --latte: #d9c7b4;
+  --mocha: #6f5a4e;
+  --error: #b3261e;
+  --white: #ffffff;
+
+  /* Semantic colors */
+  --color-bg: var(--cream);
+  --color-surface: #fbf8f4;
+  --color-surface-raised: var(--white);
+  --color-text: var(--espresso);
+  --color-text-muted: var(--mocha);
+  --color-border: var(--latte);
+  /* Terracotta is the brand accent; text and filled buttons use a deeper tone so white labels
+     and links reach WCAG AA (6.0:1 on white, 5.2:1 on cream). */
+  --color-accent: var(--terracotta);
+  --color-primary: var(--terracotta-strong);
+  --color-primary-hover: #8f3826;
+  --color-on-primary: var(--white);
+  --color-success: var(--sage);
+  --color-danger: var(--error);
+  --color-focus: var(--espresso);
+
+  /* Order status */
+  --status-pending: var(--latte);
+  --status-accepted: var(--mocha);
+  --status-preparing: var(--terracotta);
+  --status-ready: var(--sage);
+  --status-completed: var(--espresso);
+  --status-cancelled: var(--error);
+
+  /* Typography */
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* Spacing (8px grid) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(43 29 22 / 0.08);
+  --shadow-md: 0 6px 20px rgb(43 29 22 / 0.1);
+
+  --content-width: 72rem;
+  --header-height: 4rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1d140f;
+    --color-surface: #2b1d16;
+    --color-surface-raised: #36261d;
+    --color-text: var(--cream);
+    --color-text-muted: #cbb8a6;
+    --color-border: #4a3a30;
+    --color-focus: var(--cream);
+    --color-primary: #e07a62;
+    --color-primary-hover: #e8907b;
+    --color-on-primary: var(--espresso);
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 6px 20px rgb(0 0 0 / 0.45);
+  }
+}
