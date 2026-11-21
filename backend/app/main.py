@@ -12,6 +12,8 @@ API_PREFIX = "/api/v1"
 
 OPENAPI_TAGS = [
     {"name": "system", "description": "Health and service information."},
+    {"name": "auth", "description": "Phone + one-time code sign-in and token refresh."},
+    {"name": "users", "description": "The signed-in user's profile."},
 ]
 
 

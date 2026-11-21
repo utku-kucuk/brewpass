@@ -23,6 +23,16 @@ ruff check . && ruff format --check .
 - Rate limiting is per client IP (`RATE_LIMIT_DEFAULT`); add stricter limits with `@limiter.limit(...)`.
 - OpenAPI docs: `/api/v1/docs` (Swagger UI) and `/api/v1/redoc`.
 
+## Authentication
+
+1. `POST /api/v1/auth/register` with `{"phone_number": "0555 123 45 67"}` — creates the account on first use and sends a one-time code. Outside production the code is always **`1234`** (`OTP_MOCK_CODE`) and is never returned by the API.
+2. `POST /api/v1/auth/verify-otp` with the phone number and code — returns an access token (JWT, 15 min), a refresh token (30 days) and the user, including `profile_completed`.
+3. Send `Authorization: Bearer <access_token>`; in Swagger use **Authorize**.
+4. `POST /api/v1/auth/refresh` rotates the pair. Re-using an old refresh token revokes every session of that user. `POST /api/v1/auth/logout` revokes a refresh token.
+5. `GET/PATCH /api/v1/users/me` reads and completes the profile (name, email, favourite drinks, allergens).
+
+Phone numbers are normalized to E.164 (`+905xxxxxxxxx`). Codes expire after 5 minutes and lock after 5 wrong attempts. Role checks use `Depends(require_roles(UserRole.SHOP_OWNER))`.
+
 ## Database
 
 - Models live in `app/models/`; migrations in `alembic/versions/`.
