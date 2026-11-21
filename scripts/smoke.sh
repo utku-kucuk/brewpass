@@ -21,13 +21,15 @@ json() { python3 -c "import json,sys; d=json.load(sys.stdin); print(eval(sys.arg
 echo "Gateway: $BASE"
 check "gateway health" "ok" "$(curl -s "$BASE/health" | json 'd["data"]["status"]')"
 for svc in auth catalog commerce payment; do
-  check "$svc health (database ok)" "ok" "$(curl -s "$BASE/health/$svc" | json 'd["data"]["database"]')"
+  check "$svc health (right service, database ok)" "$svc ok" \
+    "$(curl -s "$BASE/health/$svc" | json 'd["data"]["service"] + " " + d["data"]["database"]')"
   check "$svc docs" "200" "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/api/v1/docs/$svc")"
 done
 
 check "internal routes are not exposed" "404" \
   "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/internal/shops/00000000-0000-0000-0000-000000000000")"
 
+# Note: the auth service allows 5 sign-in requests per minute per client IP.
 curl -s -X POST "$BASE/api/v1/auth/register" -H 'content-type: application/json' \
   -d "{\"phone_number\": \"$PHONE\"}" >/dev/null
 TOKENS=$(curl -s -X POST "$BASE/api/v1/auth/verify-otp" -H 'content-type: application/json' \
@@ -40,5 +42,39 @@ check "profile through gateway" "Demo Customer" \
 check "request id is propagated" "smoke-123" \
   "$(curl -s -D - -o /dev/null "$BASE/api/v1/users/me" -H 'X-Request-ID: smoke-123' \
      -H "Authorization: Bearer $ACCESS" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-request-id"{print $2}')"
+
+# --- Subscriptions + BrewPass Pay -----------------------------------------------------------
+AUTH=(-H "Authorization: Bearer $ACCESS" -H 'content-type: application/json')
+card() {  # card <number> -> JSON card object
+  printf '{"number": "%s", "exp_month": 12, "exp_year": %d, "cvc": "123", "holder_name": "Demo Customer"}' \
+    "$1" "$(( $(date +%Y) + 1 ))"
+}
+subscribe_body() { printf '{"plan_code": "%s", "card": %s}' "$1" "$(card "$2")"; }
+
+check "plans are listed" "SIP,DAILY,BOTTOMLESS" \
+  "$(curl -s "$BASE/api/v1/subscriptions/plans" | json '",".join(p["code"] for p in d["data"])')"
+
+# Start from a clean state so the script can run repeatedly.
+curl -s -X DELETE "$BASE/api/v1/subscriptions/me" "${AUTH[@]}" >/dev/null
+
+BODY=$(subscribe_body DAILY 4000000000000002)
+STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/v1/subscriptions" "${AUTH[@]}" -d "$BODY")
+check "declined card is rejected" "402" "$STATUS"
+
+BODY=$(subscribe_body DAILY 4242424242424242)
+SUB=$(curl -s -X POST "$BASE/api/v1/subscriptions" "${AUTH[@]}" -d "$BODY")
+check "buy Daily pass with 4242" "ACTIVE" "$(echo "$SUB" | json 'd["data"]["status"]')"
+TX=$(echo "$SUB" | json 'd["data"]["payment_transaction_id"]')
+
+ME=$(curl -s "$BASE/api/v1/subscriptions/me" "${AUTH[@]}")
+check "current pass has 20 credits" "20" "$(echo "$ME" | json 'd["data"]["remaining_credits"]')"
+
+PAYMENTS=$(curl -s "$BASE/api/v1/payments/me" "${AUTH[@]}")
+check "payment history has the charge" "SUCCEEDED" \
+  "$(echo "$PAYMENTS" | json "next(p['status'] for p in d['data'] if p['transaction_id'] == '$TX')")"
+
+UPGRADED=$(curl -s -X PATCH "$BASE/api/v1/subscriptions/me" "${AUTH[@]}" -d '{"plan_code": "BOTTOMLESS"}')
+check "upgrade to Bottomless is unlimited" "None" \
+  "$(echo "$UPGRADED" | json 'd["data"]["remaining_credits"]')"
 
 echo "All $pass checks passed."
