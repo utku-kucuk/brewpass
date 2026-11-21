@@ -92,6 +92,8 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-brewpass}:${POSTGRES_PASSWORD:-brewpass}@db:5432/brewpass_commerce
       CATALOG_SERVICE_URL: http://catalog:8000
       PAYMENT_SERVICE_URL: http://payment:8000
+      QR_SIGNING_SECRET: ${QR_SIGNING_SECRET:-dev-only-qr-secret-change-me}
+      ENFORCE_OPENING_HOURS: ${ENFORCE_OPENING_HOURS:-true}
     volumes:
       - ./secrets:/run/brewpass-secrets:ro
       - ./services/common/brewpass_common:/srv/common/brewpass_common
