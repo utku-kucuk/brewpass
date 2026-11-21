@@ -6,6 +6,8 @@ requires-python = ">=3.12"
 dependencies = [
     "brewpass-common",
     "geoalchemy2>=0.17,<1.0",
+    # IANA time zones for "open now" (slim images ship without the system database).
+    "tzdata>=2024.1",
 ]
 
 [build-system]
