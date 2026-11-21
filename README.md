@@ -47,6 +47,8 @@ docker compose up -d db
 cd backend
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+alembic upgrade head        # create the schema
+python -m app.db.seed       # load plans, demo users and Istanbul shops
 uvicorn app.main:app --reload
 
 # 4. Frontend — http://localhost:5173 (in a second terminal)
@@ -56,6 +58,8 @@ npm run dev
 ```
 
 ### Quality checks
+
+Backend tests run against a real PostgreSQL database (`brewpass_test`, recreated on every run), so the `db` service must be up.
 
 ```bash
 # Backend
