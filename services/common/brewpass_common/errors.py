@@ -38,6 +38,12 @@ class NotFoundError(AppError):
     message = "The requested resource was not found."
 
 
+class PaymentRequiredError(AppError):
+    status_code = status.HTTP_402_PAYMENT_REQUIRED
+    code = "PAYMENT_DECLINED"
+    message = "The payment was declined."
+
+
 class ConflictError(AppError):
     status_code = status.HTTP_409_CONFLICT
     code = "CONFLICT"
@@ -71,6 +77,7 @@ class ServiceUnavailableError(AppError):
 HTTP_STATUS_CODES = {
     400: "BAD_REQUEST",
     401: "UNAUTHORIZED",
+    402: "PAYMENT_REQUIRED",
     403: "FORBIDDEN",
     404: "NOT_FOUND",
     405: "METHOD_NOT_ALLOWED",

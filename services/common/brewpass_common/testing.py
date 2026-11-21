@@ -1,9 +1,12 @@
 """Test helpers shared by service test suites."""
 
+import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import jwt
 from alembic import command
 from alembic.config import Config
 from cryptography.hazmat.primitives import serialization
@@ -33,6 +36,26 @@ def generate_key_pair() -> KeyPair:
         .decode()
     )
     return KeyPair(private_pem=private_pem, public_pem=public_pem)
+
+
+def make_access_token(
+    private_pem: str, user_id: uuid.UUID, role: str = "CUSTOMER", *, minutes: int = 5
+) -> str:
+    """An access token shaped exactly like the ones the auth service issues."""
+    now = datetime.now(UTC)
+    payload = {
+        "sub": str(user_id),
+        "role": role,
+        "type": "access",
+        "iss": "brewpass-auth",
+        "iat": now,
+        "exp": now + timedelta(minutes=minutes),
+    }
+    return jwt.encode(payload, private_pem, algorithm="RS256")
+
+
+def bearer(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 def recreate_database(url: str) -> None:
