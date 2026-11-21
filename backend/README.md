@@ -14,6 +14,15 @@ pytest                          # run tests (needs the `db` service; uses `brewp
 ruff check . && ruff format --check .
 ```
 
+## API conventions
+
+- Code is layered: `app/api` (routers) → `app/services` (business logic) → `app/repositories` (data access) → `app/models`.
+- Every response uses the envelope `{ "success": bool, "data": ..., "error": { "code", "message", "details" } | null }`.
+- Services raise `AppError` subclasses (`NotFoundError`, `ConflictError`, `UnauthorizedError`, `ForbiddenError`, `UnprocessableError`); global handlers map them, validation errors (`VALIDATION_ERROR`) and unexpected errors (`INTERNAL_ERROR`) to the envelope.
+- Each request gets an `X-Request-ID` and one structured JSON log line; security headers are added to every response.
+- Rate limiting is per client IP (`RATE_LIMIT_DEFAULT`); add stricter limits with `@limiter.limit(...)`.
+- OpenAPI docs: `/api/v1/docs` (Swagger UI) and `/api/v1/redoc`.
+
 ## Database
 
 - Models live in `app/models/`; migrations in `alembic/versions/`.
