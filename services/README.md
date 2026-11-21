@@ -52,6 +52,19 @@ In Docker, every service runs `alembic upgrade head` (and its seed when `SEED_ON
 4. `POST /api/v1/auth/refresh` rotates the pair; re-using an old refresh token revokes every session of that user. `POST /api/v1/auth/logout` revokes a refresh token.
 5. `GET/PATCH /api/v1/users/me` reads and completes the profile.
 
+## Shop discovery
+
+| Method | Path | What |
+| ------ | ---- | ---- |
+| GET | `/api/v1/shops` | Search partner shops (public) |
+| GET | `/api/v1/shops/{id}` | Details, weekly opening hours; distance with `lat`/`lng` |
+| GET | `/api/v1/shops/{id}/menu` | Drinks with options and availability |
+
+`GET /api/v1/shops` query parameters: `lat` + `lng` (both or neither), `radius` in meters (100–20000, default 3000), `q` (name or address), `min_rating`, `open_now`, `sort` (`distance` default with a location, otherwise `rating`; or `name`), `limit` (≤ 50) and `offset`. The response is `{items, total, limit, offset}`; each shop has `distance_m`, `is_open_now` and today's hours.
+
+- Radius filtering and distances use PostGIS (`ST_DWithin` / `ST_Distance` on a GiST-indexed geography column), in meters on the earth's surface.
+- Opening hours are local wall-clock times in `SHOP_TIMEZONE` (default `Europe/Istanbul`); a missing day means closed.
+
 ## Subscriptions and BrewPass Pay
 
 | Method | Path | Who | What |

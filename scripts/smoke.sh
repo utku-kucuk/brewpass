@@ -43,6 +43,12 @@ check "request id is propagated" "smoke-123" \
   "$(curl -s -D - -o /dev/null "$BASE/api/v1/users/me" -H 'X-Request-ID: smoke-123' \
      -H "Authorization: Bearer $ACCESS" | tr -d '\r' | awk -F': ' 'tolower($1)=="x-request-id"{print $2}')"
 
+# --- Shop discovery ----------------------------------------------------------------------
+SHOPS=$(curl -s "$BASE/api/v1/shops?lat=41.0222&lng=28.9765&radius=2500")
+check "nearest shop to Karaköy pier" "Karaköy Brew Lab" "$(echo "$SHOPS" | json 'd["data"]["items"][0]["name"]')"
+SHOP_ID=$(echo "$SHOPS" | json 'd["data"]["items"][0]["id"]')
+check "shop menu" "5" "$(curl -s "$BASE/api/v1/shops/$SHOP_ID/menu" | json 'len(d["data"]["items"])')"
+
 # --- Subscriptions + BrewPass Pay -----------------------------------------------------------
 AUTH=(-H "Authorization: Bearer $ACCESS" -H 'content-type: application/json')
 card() {  # card <number> -> JSON card object
