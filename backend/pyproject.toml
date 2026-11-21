@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.15,<2.0",
     "psycopg[binary]>=3.2.10,<4.0",
     "geoalchemy2>=0.17,<1.0",
+    "slowapi>=0.1.9,<1.0",
 ]
 
 [project.optional-dependencies]
