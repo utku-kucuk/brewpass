@@ -1,16 +1,18 @@
 """Commerce service test fixtures.
 
 Tests run against a real PostgreSQL database (`brewpass_commerce_test`), recreated and migrated once
-per session. Each test runs in a transaction that is rolled back afterwards.
+per session. Each test runs in a transaction that is rolled back afterwards. The payment service
+is replaced by `FakePayments` (see `tests/fakes.py`).
 """
 
 import os
 from collections.abc import Iterator
 from pathlib import Path
 
-from brewpass_common.testing import prepared_engine, rollback_session
+from brewpass_common.testing import generate_key_pair, prepared_engine, rollback_session
 
 INTERNAL_TOKEN = "test-internal-token"
+KEYS = generate_key_pair()
 
 # Must be set before the service settings are created.
 os.environ.setdefault("ENVIRONMENT", "test")
@@ -18,14 +20,18 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 os.environ.setdefault("LOG_FORMAT", "text")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
 os.environ.setdefault("INTERNAL_TOKEN", INTERNAL_TOKEN)
+os.environ["JWT_PUBLIC_KEY"] = KEYS.public_pem
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import Engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
+from commerce_service.clients.payment_client import get_payment_client  # noqa: E402
 from commerce_service.db import get_db  # noqa: E402
 from commerce_service.main import create_app  # noqa: E402
+from commerce_service.seed import seed  # noqa: E402
+from tests.fakes import FakePayments  # noqa: E402
 
 SERVICE_DIR = Path(__file__).resolve().parent.parent
 TEST_DATABASE_URL = os.environ.get(
@@ -47,9 +53,16 @@ def db_session(engine: Engine) -> Iterator[Session]:
 
 
 @pytest.fixture
-def client(db_session: Session) -> Iterator[TestClient]:
-    """API client whose requests share the test's rolled-back database session."""
+def payments() -> FakePayments:
+    return FakePayments()
+
+
+@pytest.fixture
+def client(db_session: Session, payments: FakePayments) -> Iterator[TestClient]:
+    """API client sharing the test's rolled-back session, with plans seeded."""
+    seed(db_session)
     app = create_app()
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_payment_client] = lambda: payments
     with TestClient(app) as test_client:
         yield test_client

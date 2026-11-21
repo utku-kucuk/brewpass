@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, text
+from sqlalchemy import CheckConstraint, DateTime, Enum, ForeignKey, Index, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from brewpass_common.db import TimestampMixin, UUIDPrimaryKeyMixin
@@ -36,6 +36,12 @@ class Subscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Transaction id from the payment service for the payment that started or last changed
     # this subscription.
     payment_transaction_id: Mapped[uuid.UUID | None] = mapped_column()
+    # Saved card token from the payment service, used for renewals and upgrades.
+    card_token: Mapped[str | None] = mapped_column(String(64))
+    # A downgrade takes effect at the next renewal.
+    pending_plan_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("plans.id", ondelete="SET NULL")
+    )
     status: Mapped[SubscriptionStatus] = mapped_column(
         Enum(SubscriptionStatus, name="subscription_status"), default=SubscriptionStatus.ACTIVE
     )
@@ -47,4 +53,5 @@ class Subscription(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     cancelled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    plan: Mapped[Plan] = relationship()
+    plan: Mapped[Plan] = relationship(foreign_keys=[plan_id])
+    pending_plan: Mapped[Plan | None] = relationship(foreign_keys=[pending_plan_id])

@@ -8,9 +8,10 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 
-from brewpass_common.testing import prepared_engine, rollback_session
+from brewpass_common.testing import generate_key_pair, prepared_engine, rollback_session
 
 INTERNAL_TOKEN = "test-internal-token"
+KEYS = generate_key_pair()
 
 # Must be set before the service settings are created.
 os.environ.setdefault("ENVIRONMENT", "test")
@@ -18,6 +19,7 @@ os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 os.environ.setdefault("LOG_FORMAT", "text")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
 os.environ.setdefault("INTERNAL_TOKEN", INTERNAL_TOKEN)
+os.environ["JWT_PUBLIC_KEY"] = KEYS.public_pem
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

@@ -52,6 +52,23 @@ In Docker, every service runs `alembic upgrade head` (and its seed when `SEED_ON
 4. `POST /api/v1/auth/refresh` rotates the pair; re-using an old refresh token revokes every session of that user. `POST /api/v1/auth/logout` revokes a refresh token.
 5. `GET/PATCH /api/v1/users/me` reads and completes the profile.
 
+## Subscriptions and BrewPass Pay
+
+| Method | Path | Who | What |
+| ------ | ---- | --- | ---- |
+| GET | `/api/v1/subscriptions/plans` | anyone | Sip, Daily, Bottomless |
+| POST | `/api/v1/subscriptions` | customer | Buy a pass: `{"plan_code": "DAILY", "card": {...}}` |
+| GET | `/api/v1/subscriptions/me` | customer | Current pass, remaining credits, scheduled downgrade |
+| PATCH | `/api/v1/subscriptions/me` | customer | `{"plan_code": ...}` — upgrade now (price difference charged) or downgrade at renewal |
+| POST | `/api/v1/subscriptions/me/resume` | customer | Pay again to reactivate a paused pass |
+| DELETE | `/api/v1/subscriptions/me` | customer | Cancel immediately (no refund) |
+| GET | `/api/v1/payments/me` | signed in | Payment history, including declined attempts |
+
+- Prices are owned by commerce, which charges through the payment service's internal API (`POST /internal/payments/charge`). There is no public "charge any amount" endpoint.
+- Test cards: `4242 4242 4242 4242` succeeds, `4000 0000 0000 0002` is declined (`402 PAYMENT_DECLINED`). Any other Luhn-valid, unexpired card succeeds.
+- Card numbers are never stored or logged; the payment service keeps the brand, last 4 digits and an opaque token used for renewals and upgrades.
+- Passes renew monthly: on read, and in bulk via `POST /internal/subscriptions/renew-due` (for a scheduler). A declined renewal pauses the pass until it is resumed.
+
 ## Demo accounts (seed)
 
 | Role       | Phone                                            |
