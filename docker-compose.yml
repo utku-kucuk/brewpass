@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgis/postgis:16-3.5
+    # Official image is amd64-only; runs under emulation on Apple Silicon.
+    platform: linux/amd64
+    container_name: brewpass-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-brewpass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-brewpass}
+      POSTGRES_DB: ${POSTGRES_DB:-brewpass}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db-data:
