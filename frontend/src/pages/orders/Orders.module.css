@@ -1,0 +1,202 @@
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.errorText {
+  color: var(--color-danger);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Builder */
+.builder {
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.blocker {
+  margin-bottom: var(--space-5);
+  border: 2px solid var(--color-accent);
+}
+
+.blocker p {
+  font-weight: 600;
+}
+
+.noteLabel {
+  display: block;
+  margin-bottom: var(--space-1);
+  font-weight: 600;
+}
+
+.note {
+  width: 100%;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: inherit;
+  resize: vertical;
+}
+
+.guest {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-weight: 500;
+}
+
+.guest input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+.summary {
+  margin-top: var(--space-2);
+}
+
+.summaryDrink {
+  font-weight: 700;
+}
+
+/* Order page */
+.orderPage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-muted);
+}
+
+.priority {
+  margin-left: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.orderLayout {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .orderLayout {
+    grid-template-columns: auto 1fr;
+    align-items: start;
+  }
+}
+
+.codeCard {
+  display: flex;
+  justify-content: center;
+}
+
+.drinkName {
+  font-size: var(--text-xl);
+}
+
+.orderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+/* History */
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.tabs {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.tabs button {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--color-text-muted);
+  font: 600 var(--text-sm) var(--font-body);
+  cursor: pointer;
+}
+
+.tabs button[aria-pressed='true'] {
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+}
+
+.orderList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orderRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.orderLink {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.orderTitle {
+  font-weight: 700;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.heart {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  cursor: pointer;
+}

@@ -1,4 +1,4 @@
-import { Coffee, CreditCard, Home, User } from 'lucide-react'
+import { ClipboardList, Coffee, CreditCard, Home, User } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { useSignOut } from '../../hooks/useSignOut'
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/shops', label: 'Cafés', icon: Coffee, end: false },
   { to: '/pass', label: 'Pass', icon: CreditCard, end: false },
+  { to: '/orders', label: 'Orders', icon: ClipboardList, end: false },
   { to: '/profile', label: 'Profile', icon: User, end: false },
 ]
 

@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/ui/StateM
 import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import { useGeolocation } from '../../hooks/useGeolocation'
 import { ApiError } from '../../lib/api'
+import { useAuthStore } from '../../lib/auth-store'
 import { CATEGORY_LABELS, formatDistance, formatHours, formatPrice } from '../../lib/format'
 import styles from './ShopDetailPage.module.css'
 
@@ -38,6 +39,7 @@ export function ShopDetailPage() {
     enabled: location.status !== 'pending',
   })
   const menu = useQuery({ queryKey: ['menu', shopId], queryFn: () => getMenu(shopId) })
+  const canOrder = useAuthStore((state) => state.user?.role === 'CUSTOMER')
   useDocumentTitle(shop.data?.name ?? 'Café')
 
   if (location.status === 'pending' || shop.isPending) {
@@ -115,6 +117,15 @@ export function ShopDetailPage() {
                           <span className={styles.listPrice}>
                             {formatPrice(item.list_price)} at the counter
                           </span>
+                          {canOrder && item.is_available && (
+                            <Link
+                              to={`/shops/${shopId}/order/${item.id}`}
+                              className={styles.orderLink}
+                              aria-label={`Order ${item.name}`}
+                            >
+                              Order
+                            </Link>
+                          )}
                         </div>
                       </li>
                     ))}
