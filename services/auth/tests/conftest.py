@@ -10,9 +10,16 @@ from pathlib import Path
 
 from brewpass_common.testing import generate_key_pair, prepared_engine, rollback_session
 
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL",
+    "postgresql+psycopg://brewpass:brewpass@localhost:5432/brewpass_auth_test",
+)
+
 # Must be set before the service settings are created.
 _KEYS = generate_key_pair()
 os.environ.setdefault("ENVIRONMENT", "test")
+# The app itself (e.g. its health check) must use the test database, never the dev one.
+os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 os.environ.setdefault("LOG_FORMAT", "text")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
@@ -28,10 +35,6 @@ from auth_service.db import get_db  # noqa: E402
 from auth_service.main import create_app  # noqa: E402
 
 SERVICE_DIR = Path(__file__).resolve().parent.parent
-TEST_DATABASE_URL = os.environ.get(
-    "TEST_DATABASE_URL",
-    "postgresql+psycopg://brewpass:brewpass@localhost:5432/brewpass_auth_test",
-)
 
 
 @pytest.fixture(scope="session")
