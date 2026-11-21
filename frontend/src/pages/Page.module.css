@@ -45,3 +45,21 @@
 .stepIcon {
   color: var(--color-accent);
 }
+
+.heroCta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  margin-top: var(--space-2);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--terracotta-strong);
+  color: var(--white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.heroCta:hover {
+  background: #8f3826;
+}

@@ -1,4 +1,5 @@
 import { CreditCard, MapPin, QrCode } from 'lucide-react'
+import { Link } from 'react-router'
 
 import { Card } from '../components/ui/Card'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -20,6 +21,9 @@ export function HomePage() {
       <section className={styles.hero}>
         <h1>{name ? `Good to see you, ${name}.` : 'Welcome to BrewPass.'}</h1>
         <p>Your daily cup, already paid for.</p>
+        <Link to="/shops" className={styles.heroCta}>
+          <MapPin size={18} aria-hidden /> Find a café near you
+        </Link>
       </section>
       <div className={styles.grid}>
         {STEPS.map(({ icon: Icon, title, text }) => (

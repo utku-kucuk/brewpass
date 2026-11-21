@@ -1,4 +1,4 @@
-import { Home, LogOut, User } from 'lucide-react'
+import { Coffee, Home, LogOut, User } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { useSignOut } from '../../hooks/useSignOut'
@@ -8,6 +8,7 @@ import styles from './AppShell.module.css'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: Home, end: true },
+  { to: '/shops', label: 'Cafés', icon: Coffee, end: false },
   { to: '/profile', label: 'Profile', icon: User, end: false },
 ]
 

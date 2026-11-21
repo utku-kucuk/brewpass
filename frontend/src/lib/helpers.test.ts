@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { formatDistance } from './format'
 import { safeNext } from './navigation'
 import { formatPhone, normalizePhone } from './phone'
 
@@ -25,4 +26,16 @@ describe('safeNext', () => {
     ['https://evil.example', '/'],
     ['//evil.example', '/'],
   ])('%s -> %s', (input, expected) => expect(safeNext(input)).toBe(expected))
+})
+
+describe('formatDistance', () => {
+  it.each([
+    [null, null],
+    [0, '0 m'],
+    [644, '640 m'],
+    [999, '1.0 km'],
+    [1000, '1.0 km'],
+    [4850, '4.9 km'],
+    [12345, '12.3 km'],
+  ])('%s -> %s', (meters, expected) => expect(formatDistance(meters)).toBe(expected))
 })

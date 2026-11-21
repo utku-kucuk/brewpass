@@ -5,6 +5,8 @@ import { RequireAuth, RequireProfile } from './components/layout/RouteGuards'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { ShopDetailPage } from './pages/shops/ShopDetailPage'
+import { ShopsPage } from './pages/shops/ShopsPage'
 import { SignInPage } from './pages/SignInPage'
 import { WelcomePage } from './pages/WelcomePage'
 
@@ -22,6 +24,8 @@ export const routes: RouteObject[] = [
             children: [
               { path: '/', element: <HomePage /> },
               { path: '/profile', element: <ProfilePage /> },
+              { path: '/shops', element: <ShopsPage /> },
+              { path: '/shops/:shopId', element: <ShopDetailPage /> },
             ],
           },
         ],
