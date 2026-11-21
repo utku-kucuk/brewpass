@@ -7,8 +7,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Forward API calls to the FastAPI backend during development.
-      '/api': 'http://localhost:8000',
+      // Forward API calls to the API gateway (docker compose) during development.
+      '/api': 'http://localhost:8080',
     },
   },
 })
