@@ -4,6 +4,9 @@ import { AppShell } from './components/layout/AppShell'
 import { RequireAuth, RequireProfile } from './components/layout/RouteGuards'
 import { HomePage } from './pages/HomePage'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { CheckoutPage } from './pages/pass/CheckoutPage'
+import { PassPage } from './pages/pass/PassPage'
+import { PaymentsPage } from './pages/pass/PaymentsPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { ShopDetailPage } from './pages/shops/ShopDetailPage'
 import { ShopsPage } from './pages/shops/ShopsPage'
@@ -26,6 +29,9 @@ export const routes: RouteObject[] = [
               { path: '/profile', element: <ProfilePage /> },
               { path: '/shops', element: <ShopsPage /> },
               { path: '/shops/:shopId', element: <ShopDetailPage /> },
+              { path: '/pass', element: <PassPage /> },
+              { path: '/pass/checkout', element: <CheckoutPage /> },
+              { path: '/payments', element: <PaymentsPage /> },
             ],
           },
         ],
