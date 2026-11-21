@@ -1,4 +1,4 @@
-import { Coffee, Home, LogOut, User } from 'lucide-react'
+import { Coffee, CreditCard, Home, User } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router'
 
 import { useSignOut } from '../../hooks/useSignOut'
@@ -9,6 +9,7 @@ import styles from './AppShell.module.css'
 const NAV_ITEMS = [
   { to: '/', label: 'Home', icon: Home, end: true },
   { to: '/shops', label: 'Cafés', icon: Coffee, end: false },
+  { to: '/pass', label: 'Pass', icon: CreditCard, end: false },
   { to: '/profile', label: 'Profile', icon: User, end: false },
 ]
 
@@ -63,10 +64,6 @@ export function AppShell() {
               <span>{label}</span>
             </NavLink>
           ))}
-          <button type="button" className={styles.tab} onClick={signOut}>
-            <LogOut size={22} aria-hidden />
-            <span>Sign out</span>
-          </button>
         </nav>
       )}
     </div>

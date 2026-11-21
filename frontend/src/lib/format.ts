@@ -25,3 +25,40 @@ export const CATEGORY_LABELS: Record<string, string> = {
   TEA: 'Tea',
   OTHER: 'Other drinks',
 }
+
+const dateFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+export const formatDate = (iso: string) => dateFormat.format(new Date(iso))
+export const formatDateTime = (iso: string) => dateTimeFormat.format(new Date(iso))
+
+const PLAN_NAMES: Record<string, string> = { SIP: 'Sip', DAILY: 'Daily', BOTTOMLESS: 'Bottomless' }
+
+/** Payment descriptions from the API ("upgrade:SIP->DAILY") as readable text. */
+export function describePayment(description: string): string {
+  const [kind, detail = ''] = description.split(':')
+  const plan = (code: string) => PLAN_NAMES[code] ?? code
+  switch (kind) {
+    case 'subscription':
+      return `${plan(detail)} pass`
+    case 'renewal':
+      return `${plan(detail)} pass renewal`
+    case 'resume':
+      return `${plan(detail)} pass resumed`
+    case 'upgrade': {
+      const [from, to] = detail.split('->')
+      return `Upgrade ${plan(from)} → ${plan(to)}`
+    }
+    default:
+      return description
+  }
+}

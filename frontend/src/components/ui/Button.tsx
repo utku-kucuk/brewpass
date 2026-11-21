@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 
 import styles from './Button.module.css'
 import { Spinner } from './Spinner'
@@ -10,6 +10,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean
   fullWidth?: boolean
   icon?: ReactNode
+  ref?: Ref<HTMLButtonElement>
 }
 
 export function Button({
@@ -21,6 +22,7 @@ export function Button({
   children,
   className,
   type = 'button',
+  ref,
   ...rest
 }: ButtonProps) {
   const classes = [styles.button, styles[variant], fullWidth && styles.fullWidth, className]
@@ -28,6 +30,7 @@ export function Button({
     .join(' ')
   return (
     <button
+      ref={ref}
       type={type}
       className={classes}
       disabled={disabled || loading}
